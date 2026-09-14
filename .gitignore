@@ -1,0 +1,5 @@
+# build artifacts
+build_single.sh
+*.log
+.codebuddy/
+__pycache__/

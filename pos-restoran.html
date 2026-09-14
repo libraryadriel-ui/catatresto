@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Catat Resto POS — Sistem Kasir Restoran</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+ * Catat Resto POS — Stylesheet
+ * Desain modern, aksen merah-oranye (terinspirasi MokaPOS)
+ * ============================================================ */
+
+:root {
+  --primary: #ff4d2d;
+  --primary-dark: #e63a1c;
+  --primary-soft: #fff0ec;
+  --accent: #ff8a3d;
+  --ink: #1c2433;
+  --ink-soft: #5b6478;
+  --muted: #939db1;
+  --line: #eceff4;
+  --bg: #f6f8fb;
+  --card: #ffffff;
+  --green: #16a34a;
+  --green-soft: #e8f7ee;
+  --red: #dc2626;
+  --amber: #f59e0b;
+  --shadow-sm: 0 1px 3px rgba(28, 36, 51, .08);
+  --shadow: 0 4px 20px rgba(28, 36, 51, .08);
+  --shadow-lg: 0 12px 40px rgba(28, 36, 51, .14);
+  --radius: 14px;
+  --radius-sm: 10px;
+  --sidebar-w: 248px;
+  --t: .22s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { height: 100%; }
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============ LAYOUT ============ */
+.app { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: var(--sidebar-w);
+  background: #18223a;
+  color: #cdd5e6;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 30;
+  transition: transform var(--t);
+}
+
+.brand {
+  display: flex; align-items: center; gap: 12px;
+  padding: 22px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.brand-logo {
+  width: 42px; height: 42px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  display: grid; place-items: center; font-size: 22px;
+  box-shadow: 0 4px 12px rgba(255,77,45,.4);
+}
+.brand-text { display: flex; flex-direction: column; line-height: 1.2; }
+.brand-name { color: #fff; font-weight: 700; font-size: 15px; }
+.brand-sub { color: #7a8599; font-size: 12px; }
+
+.nav { flex: 1; padding: 14px 12px; display: flex; flex-direction: column; gap: 4px; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px; border-radius: 10px;
+  color: #aab4c7; text-decoration: none;
+  font-weight: 500; font-size: 14px; cursor: pointer;
+  transition: all var(--t);
+}
+.nav-item .nav-ic { font-size: 18px; width: 22px; text-align: center; }
+.nav-item:hover { background: rgba(255,255,255,.06); color: #fff; }
+.nav-item.active {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; box-shadow: 0 6px 16px rgba(255,77,45,.35);
+}
+
+.printer-box { padding: 16px; border-top: 1px solid rgba(255,255,255,.07); }
+.printer-status {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; background: rgba(255,255,255,.04);
+  border-radius: 8px; margin-bottom: 10px;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dot-off { background: #ef4444; box-shadow: 0 0 0 4px rgba(239,68,68,.18); }
+.dot-on { background: #22c55e; box-shadow: 0 0 0 4px rgba(34,197,94,.2); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.5;} }
+.printer-label { font-size: 12px; color: #aab4c7; }
+.btn-printer {
+  width: 100%; padding: 10px; border: none; border-radius: 8px;
+  background: rgba(255,255,255,.08); color: #fff;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background var(--t);
+}
+.btn-printer:hover { background: rgba(255,255,255,.15); }
+.btn-printer.connected { background: rgba(239,68,68,.2); }
+
+/* ============ MAIN ============ */
+.main { flex: 1; margin-left: var(--sidebar-w); display: flex; flex-direction: column; min-width: 0; }
+
+.topbar {
+  height: 64px; background: var(--card);
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 24px; position: sticky; top: 0; z-index: 20;
+}
+.menu-toggle {
+  display: none; background: none; border: none; font-size: 22px;
+  cursor: pointer; color: var(--ink);
+}
+.page-title { font-size: 20px; font-weight: 700; flex: 1; }
+.topbar-right { display: flex; align-items: center; gap: 16px; }
+.today-date { color: var(--ink-soft); font-size: 13px; }
+.user-chip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px; background: var(--primary-soft);
+  border-radius: 20px; font-weight: 600; color: var(--primary-dark); font-size: 13px;
+}
+
+.content { flex: 1; padding: 24px; }
+
+/* ============ CARDS ============ */
+.card {
+  background: var(--card); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm); border: 1px solid var(--line);
+}
+.card-pad { padding: 20px; }
+.card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 20px; border-bottom: 1px solid var(--line);
+}
+.card-head h3 { font-size: 16px; font-weight: 700; }
+.card-head .sub { font-size: 12px; color: var(--muted); }
+
+/* ============ STATS GRID ============ */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card {
+  background: var(--card); border-radius: var(--radius);
+  padding: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 8px; position: relative; overflow: hidden;
+}
+.stat-card .stat-ic {
+  position: absolute; top: 16px; right: 16px;
+  width: 40px; height: 40px; border-radius: 10px;
+  display: grid; place-items: center; font-size: 20px;
+}
+.stat-label { color: var(--ink-soft); font-size: 13px; font-weight: 500; }
+.stat-value { font-size: 26px; font-weight: 800; color: var(--ink); }
+.stat-foot { font-size: 12px; color: var(--muted); }
+.bg-red { background: var(--primary-soft); } .ic-red { color: var(--primary); }
+.bg-green { background: var(--green-soft); } .ic-green { color: var(--green); }
+.bg-amber { background: #fff6e6; } .ic-amber { color: var(--amber); }
+.bg-blue { background: #eaf2ff; } .ic-blue { color: #2563eb; }
+
+/* ============ DASHBOARD ============ */
+.dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+.chart-wrap { height: 300px; position: relative; }
+.top-list { list-style: none; display: flex; flex-direction: column; gap: 12px; padding: 18px 20px; }
+.top-list li { display: flex; align-items: center; gap: 12px; }
+.top-rank {
+  width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
+  display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #fff;
+}
+.top-name { flex: 1; font-weight: 500; }
+.top-qty { font-weight: 700; color: var(--primary); }
+.empty-state { padding: 48px 20px; text-align: center; color: var(--muted); }
+.empty-state .em-ic { font-size: 42px; display: block; margin-bottom: 8px; }
+
+/* ============ POS (KASIR) ============ */
+.pos-layout { display: grid; grid-template-columns: 1fr 380px; gap: 20px; min-height: calc(100vh - 112px); }
+.pos-left { display: flex; flex-direction: column; gap: 16px; }
+
+.pos-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.pos-tab {
+  padding: 8px 18px; border-radius: 20px; border: 1.5px solid var(--line);
+  background: var(--card); font-weight: 600; font-size: 13px; cursor: pointer;
+  color: var(--ink-soft); transition: all var(--t);
+}
+.pos-tab:hover { border-color: var(--primary); color: var(--primary); }
+.pos-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.pos-search {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--card); border: 1.5px solid var(--line);
+  border-radius: 12px; padding: 0 14px;
+}
+.pos-search input { border: none; outline: none; flex: 1; padding: 11px 0; font-size: 14px; background: none; }
+.pos-search .ps-ic { color: var(--muted); }
+
+.menu-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(170px,1fr));
+  gap: 14px; align-content: start;
+}
+.menu-tile {
+  background: var(--card); border-radius: var(--radius); border: 1px solid var(--line);
+  overflow: hidden; cursor: pointer; transition: all var(--t);
+  display: flex; flex-direction: column; text-align: left;
+}
+.menu-tile:hover { box-shadow: var(--shadow); transform: translateY(-2px); border-color: var(--primary); }
+.menu-tile .mt-emoji {
+  height: 88px; display: grid; place-items: center; font-size: 40px;
+  background: linear-gradient(135deg, #fff5f1, #fff8e6);
+}
+.menu-tile .mt-body { padding: 12px; }
+.menu-tile .mt-name { font-weight: 600; font-size: 13px; margin-bottom: 4px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.menu-tile .mt-price { color: var(--primary); font-weight: 700; font-size: 14px; }
+.menu-tile .mt-desc { font-size: 11px; color: var(--muted); margin-top: 2px;
+  display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ---- CART ---- */
+.cart {
+  background: var(--card); border-radius: var(--radius); border: 1px solid var(--line);
+  box-shadow: var(--shadow); display: flex; flex-direction: column;
+  position: sticky; top: 88px; max-height: calc(100vh - 112px);
+}
+.cart-head {
+  padding: 18px; border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.cart-head h3 { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.cart-count { background: var(--primary-soft); color: var(--primary); padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; }
+.cart-clear { background: none; border: none; color: var(--red); font-size: 12px; cursor: pointer; font-weight: 600; }
+
+.cart-items { flex: 1; overflow-y: auto; padding: 8px; }
+.cart-empty { padding: 40px 20px; text-align: center; color: var(--muted); }
+.cart-empty .ce-ic { font-size: 44px; display: block; margin-bottom: 8px; }
+.cart-line {
+  display: flex; align-items: center; gap: 10px; padding: 10px;
+  border-radius: 10px; transition: background var(--t);
+}
+.cart-line:hover { background: var(--bg); }
+.cart-line .cl-emoji { font-size: 22px; width: 36px; text-align: center; }
+.cart-line .cl-info { flex: 1; min-width: 0; }
+.cart-line .cl-name { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cart-line .cl-price { font-size: 12px; color: var(--ink-soft); }
+.cart-line .cl-qty { display: flex; align-items: center; gap: 6px; }
+.qty-btn {
+  width: 24px; height: 24px; border-radius: 7px; border: 1px solid var(--line);
+  background: var(--card); cursor: pointer; font-weight: 700; color: var(--ink);
+  display: grid; place-items: center; line-height: 1;
+}
+.qty-btn:hover { border-color: var(--primary); color: var(--primary); }
+.cl-qty span { min-width: 20px; text-align: center; font-weight: 600; font-size: 13px; }
+.cl-total { font-weight: 700; font-size: 13px; min-width: 60px; text-align: right; }
+.cl-remove { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 2px; }
+.cl-remove:hover { color: var(--red); }
+
+.cart-meta { padding: 14px 18px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.meta-row { display: flex; align-items: center; gap: 10px; }
+.meta-row label { font-size: 12px; color: var(--ink-soft); width: 60px; font-weight: 600; }
+.meta-input {
+  flex: 1; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
+  font-size: 13px; outline: none; font-family: inherit;
+}
+.meta-input:focus { border-color: var(--primary); }
+.pay-chips { display: flex; gap: 6px; }
+.pay-chip {
+  flex: 1; padding: 8px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--card); cursor: pointer; font-size: 12px; font-weight: 600;
+  text-align: center; transition: all var(--t);
+}
+.pay-chip:hover { border-color: var(--primary); }
+.pay-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+.cart-totals { padding: 14px 18px; border-top: 1px solid var(--line); }
+.total-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: var(--ink-soft); }
+.total-row.grand { font-size: 18px; font-weight: 800; color: var(--ink); margin-top: 8px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.total-row.grand .tg-val { color: var(--primary); }
+
+.cart-actions { padding: 16px 18px; border-top: 1px solid var(--line); display: flex; gap: 10px; }
+.btn {
+  padding: 13px 18px; border: none; border-radius: 10px; font-weight: 700; font-size: 14px;
+  cursor: pointer; transition: all var(--t); display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-primary { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; box-shadow: 0 6px 16px rgba(255,77,45,.3); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(255,77,45,.4); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-ghost { background: var(--bg); color: var(--ink); }
+.btn-ghost:hover { background: var(--line); }
+.btn-block { width: 100%; }
+.btn-sm { padding: 8px 14px; font-size: 13px; }
+
+/* ============ MENU MANAGEMENT ============ */
+.toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; }
+.search-mini {
+  display: flex; align-items: center; gap: 8px; background: var(--card);
+  border: 1.5px solid var(--line); border-radius: 10px; padding: 0 12px;
+}
+.search-mini input { border: none; outline: none; padding: 9px 0; font-size: 13px; background: none; min-width: 200px; }
+
+.table-wrap { background: var(--card); border-radius: var(--radius); border: 1px solid var(--line); overflow: hidden; box-shadow: var(--shadow-sm); }
+table.tbl { width: 100%; border-collapse: collapse; }
+table.tbl th {
+  text-align: left; padding: 13px 16px; font-size: 12px; font-weight: 700;
+  color: var(--ink-soft); text-transform: uppercase; letter-spacing: .04em;
+  background: #fafbfd; border-bottom: 1px solid var(--line);
+}
+table.tbl td { padding: 14px 16px; border-bottom: 1px solid var(--line); font-size: 13px; }
+table.tbl tr:last-child td { border-bottom: none; }
+table.tbl tr:hover td { background: #fafbfd; }
+.tcat { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+.tcat-Makanan { background: #fff0ec; color: #d14820; }
+.tcat-Minuman { background: #eaf2ff; color: #2563eb; }
+.tcat-Snack { background: #fff6e6; color: #b8841c; }
+.tcat-Lainnya { background: #f0f0f5; color: #555; }
+.tprice { font-weight: 700; color: var(--ink); }
+.row-actions { display: flex; gap: 6px; }
+.row-actions button {
+  width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--card); cursor: pointer; font-size: 14px; display: grid; place-items: center;
+}
+.row-actions button:hover { border-color: var(--primary); }
+.row-actions button.del:hover { border-color: var(--red); }
+
+/* ============ ORDERS LIST ============ */
+.order-card { display: flex; flex-direction: column; gap: 4px; }
+.order-no { font-weight: 700; }
+.order-meta { font-size: 12px; color: var(--muted); }
+.order-items-mini { font-size: 12px; color: var(--ink-soft); }
+.order-total { font-weight: 800; color: var(--primary); }
+
+/* ============ MODAL ============ */
+.modal-root { position: fixed; inset: 0; z-index: 100; display: none; }
+.modal-root.show { display: block; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(15,23,42,.5); backdrop-filter: blur(3px); }
+.modal {
+  position: relative; max-width: 480px; width: calc(100% - 32px); margin: 8vh auto;
+  background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow-lg);
+  overflow: hidden; animation: pop .2s ease;
+}
+@keyframes pop { from { transform: scale(.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.modal-head { padding: 20px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+.modal-head h3 { font-size: 17px; font-weight: 700; }
+.modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--muted); line-height: 1; }
+.modal-body { padding: 20px; max-height: 65vh; overflow-y: auto; }
+.modal-foot { padding: 16px 20px; border-top: 1px solid var(--line); display: flex; gap: 10px; justify-content: flex-end; }
+
+.form-row { margin-bottom: 16px; }
+.form-row label { display: block; font-size: 12px; font-weight: 600; color: var(--ink-soft); margin-bottom: 6px; }
+.form-control {
+  width: 100%; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 10px;
+  font-size: 14px; font-family: inherit; outline: none; transition: border var(--t);
+}
+.form-control:focus { border-color: var(--primary); }
+textarea.form-control { resize: vertical; min-height: 64px; }
+.form-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.emoji-picker { display: flex; gap: 6px; flex-wrap: wrap; }
+.emoji-opt {
+  width: 38px; height: 38px; border-radius: 8px; border: 1.5px solid var(--line);
+  background: var(--card); font-size: 20px; cursor: pointer; display: grid; place-items: center;
+}
+.emoji-opt.active { border-color: var(--primary); background: var(--primary-soft); }
+
+/* receipt preview */
+.receipt {
+  font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.5;
+  background: #fff; padding: 20px; border: 1px dashed var(--line); border-radius: 8px;
+  white-space: pre-wrap; color: #000; max-width: 320px; margin: 0 auto;
+}
+
+/* ============ TOAST ============ */
+.toast {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(120px);
+  background: var(--ink); color: #fff; padding: 13px 22px; border-radius: 12px;
+  font-weight: 600; font-size: 13px; box-shadow: var(--shadow-lg); z-index: 200;
+  transition: transform .3s cubic-bezier(.2,.8,.3,1.2); opacity: 0;
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast.success { background: var(--green); }
+.toast.error { background: var(--red); }
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 980px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .menu-toggle { display: block; }
+  .dash-grid { grid-template-columns: 1fr; }
+  .pos-layout { grid-template-columns: 1fr; }
+  .cart { position: static; max-height: none; }
+}
+@media (max-width: 560px) {
+  .content { padding: 16px; }
+  .stats { grid-template-columns: 1fr 1fr; }
+  .topbar { padding: 0 16px; }
+  .today-date { display: none; }
+  .menu-grid { grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); }
+}
+.scrim { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 29; display: none; }
+.scrim.show { display: block; }
+</style>
+</head>
+<body>
+<div id="app" class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-logo">🍽️</div>
+      <div class="brand-text">
+        <span class="brand-name" id="brandName">Catat Resto</span>
+        <span class="brand-sub">POS System</span>
+      </div>
+    </div>
+    <nav class="nav">
+      <a class="nav-item active" data-view="dashboard"><span class="nav-ic">📊</span> Dashboard</a>
+      <a class="nav-item" data-view="pos"><span class="nav-ic">🧾</span> Kasir</a>
+      <a class="nav-item" data-view="menu"><span class="nav-ic">📋</span> Manajemen Menu</a>
+      <a class="nav-item" data-view="orders"><span class="nav-ic">📦</span> Riwayat Order</a>
+      <a class="nav-item" data-view="settings"><span class="nav-ic">⚙️</span> Pengaturan</a>
+    </nav>
+    <div class="printer-box" id="printerBox">
+      <div class="printer-status" id="printerStatus">
+        <span class="dot dot-off"></span>
+        <span class="printer-label">Printer tidak terhubung</span>
+      </div>
+      <button class="btn-printer" id="btnConnectPrinter">Hubungkan Printer</button>
+    </div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+      <h1 class="page-title" id="pageTitle">Dashboard</h1>
+      <div class="topbar-right">
+        <span class="today-date" id="todayDate"></span>
+        <div class="user-chip"><span>👩‍🍳</span> Kasir</div>
+      </div>
+    </header>
+    <section class="content" id="viewRoot"></section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<div class="modal-root" id="modalRoot"></div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+/* ===== data.js ===== */
+/* ============================================================
+ * Data Layer — POS Restoran
+ * Persistensi: localStorage (cache lokal) + Firebase Firestore (cloud sync)
+ * Penyimpanan lokal instan, sinkronisasi cloud real-time.
+ * ============================================================ */
+
+const Store = {
+  KEYS: {
+    menu: 'pos_menu_items',
+    orders: 'pos_orders',
+    settings: 'pos_settings',
+  },
+
+  /* ---------- DEFAULT SETTINGS ---------- */
+  defaultSettings() {
+    return {
+      restaurantName: 'Catat Resto',
+      address: 'Jl. Merdeka No. 45, Jakarta',
+      phone: '0812-3456-7890',
+      currency: 'Rp',
+      taxRate: 0,
+      serviceCharge: 0,
+      footerNote: 'Terima kasih atas kunjungan Anda!',
+    };
+  },
+
+  /* ---------- MIGRASI NAMA DEFAULT LAMA → 'Catat Resto' ---------- */
+  _migrateLegacyName() {
+    try {
+      const raw = localStorage.getItem(this.KEYS.settings);
+      if (raw) {
+        const s = JSON.parse(raw);
+        if (s.restaurantName === 'Warung Berkah') {
+          s.restaurantName = 'Catat Resto';
+          localStorage.setItem(this.KEYS.settings, JSON.stringify(s));
+        }
+      }
+    } catch (e) {}
+  },
+
+  /* ---------- LOCAL SAVE (untuk sinkronisasi dari cloud) ---------- */
+  saveMenuLocal(arr) { localStorage.setItem(this.KEYS.menu, JSON.stringify(arr)); },
+  saveOrdersLocal(arr) { localStorage.setItem(this.KEYS.orders, JSON.stringify(arr)); },
+  saveSettingsLocal(obj) { localStorage.setItem(this.KEYS.settings, JSON.stringify(obj)); },
+
+  /* ---------- TRIGGER RE-RENDER (dipanggil saat data cloud berubah) ---------- */
+  _onChange(what) {
+    if (typeof App === 'undefined' || !App.currentView) return;
+    const v = App.currentView;
+    if (what === 'menu') {
+      if (v === 'menu') MenuUI.renderTable();
+      if (v === 'pos') { Views.posMount(); }
+    }
+    if (what === 'orders') {
+      if (v === 'orders' || v === 'dashboard') App.render(v);
+    }
+    if (what === 'settings') {
+      const el = document.getElementById('brandName');
+      if (el) el.textContent = this.getSettings().restaurantName;
+    }
+  },
+
+  /* ---------- SETTINGS ---------- */
+  getSettings() {
+    return { ...this.defaultSettings(), ...JSON.parse(localStorage.getItem(this.KEYS.settings) || '{}') };
+  },
+  saveSettings(obj) {
+    this.saveSettingsLocal(obj);
+    Fb.saveSettings(obj); // sync cloud (async, no-op jika belum dikonfigurasi)
+  },
+
+  /* ---------- MENU ITEMS ---------- */
+  getMenu() {
+    const raw = localStorage.getItem(this.KEYS.menu);
+    if (raw) return JSON.parse(raw);
+    const sample = this.sampleMenu();
+    localStorage.setItem(this.KEYS.menu, JSON.stringify(sample));
+    return sample;
+  },
+  saveMenu(arr) {
+    this.saveMenuLocal(arr);
+  },
+  addItem(item) {
+    const menu = this.getMenu();
+    item.id = item.id || 'm' + Date.now();
+    menu.push(item);
+    this.saveMenuLocal(menu);
+    Fb.addItem(item); // sync cloud
+    return item;
+  },
+  updateItem(id, patch) {
+    const menu = this.getMenu().map((m) => (m.id === id ? { ...m, ...patch } : m));
+    this.saveMenuLocal(menu);
+    Fb.updateItem(id, patch);
+  },
+  deleteItem(id) {
+    this.saveMenuLocal(this.getMenu().filter((m) => m.id !== id));
+    Fb.deleteItem(id);
+  },
+
+  /* ---------- ORDERS ---------- */
+  getOrders() {
+    return JSON.parse(localStorage.getItem(this.KEYS.orders) || '[]');
+  },
+  saveOrder(order) {
+    const orders = this.getOrders();
+    order.id = order.id || 'TRX' + Date.now();
+    order.createdAt = order.createdAt || new Date().toISOString();
+    orders.unshift(order);
+    this.saveOrdersLocal(orders);
+    Fb.saveOrder(order); // sync cloud
+    return order;
+  },
+  deleteOrder(id) {
+    this.saveOrdersLocal(this.getOrders().filter((o) => o.id !== id));
+    Fb.deleteOrder(id);
+  },
+
+  /* ---------- AGGREGATIONS (untuk dashboard) ---------- */
+  salesSummary(days = 7) {
+    const orders = this.getOrders();
+    const since = new Date();
+    since.setDate(since.getDate() - (days - 1));
+    since.setHours(0, 0, 0, 0);
+
+    const range = orders.filter((o) => new Date(o.createdAt) >= since);
+    const totalRevenue = range.reduce((s, o) => s + o.totals.grandTotal, 0);
+    const totalOrders = range.length;
+    const avgOrder = totalOrders ? totalRevenue / totalOrders : 0;
+
+    const byDay = {};
+    for (let i = 0; i < days; i++) {
+      const d = new Date(since);
+      d.setDate(d.getDate() + i);
+      const key = d.toISOString().slice(0, 10);
+      byDay[key] = { label: d.toLocaleDateString('id-ID', { weekday: 'short' }), revenue: 0, count: 0 };
+    }
+    range.forEach((o) => {
+      const key = o.createdAt.slice(0, 10);
+      if (byDay[key]) {
+        byDay[key].revenue += o.totals.grandTotal;
+        byDay[key].count += 1;
+      }
+    });
+
+    const prodMap = {};
+    range.forEach((o) =>
+      o.items.forEach((it) => {
+        prodMap[it.name] = (prodMap[it.name] || 0) + it.qty;
+      })
+    );
+    const topProducts = Object.entries(prodMap)
+      .map(([name, qty]) => ({ name, qty }))
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 5);
+
+    return { totalRevenue, totalOrders, avgOrder, byDay: Object.values(byDay), topProducts };
+  },
+
+  /* ---------- DATA SAMPEL MENU ---------- */
+  sampleMenu() {
+    return [
+      { id: 'f1', name: 'Nasi Goreng Spesial', price: 25000, category: 'Makanan', emoji: '🍚', desc: 'Nasi goreng dengan telur, ayam, dan acar.' },
+      { id: 'f2', name: 'Mie Goreng Jawa', price: 22000, category: 'Makanan', emoji: '🍜', desc: 'Mie goreng khas Jawa dengan bumbu rempah.' },
+      { id: 'f3', name: 'Ayam Bakar Madu', price: 32000, category: 'Makanan', emoji: '🍗', desc: 'Ayam bakar bumbu madu, sambal terasi.' },
+      { id: 'f4', name: 'Sate Ayam (10 tusuk)', price: 28000, category: 'Makanan', emoji: '🍢', desc: 'Sate ayam dengan bumbu kacang.' },
+      { id: 'f5', name: 'Gado-Gado', price: 20000, category: 'Makanan', emoji: '🥗', desc: 'Sayuran rebus dengan bumbu kacang.' },
+      { id: 'f6', name: 'Sop Buntut', price: 45000, category: 'Makanan', emoji: '🍲', desc: 'Sop buntut sapi gurih hangat.' },
+      { id: 'd1', name: 'Es Teh Manis', price: 8000, category: 'Minuman', emoji: '🧊', desc: 'Teh manis dingin segar.' },
+      { id: 'd2', name: 'Teh Hangat', price: 7000, category: 'Minuman', emoji: '🍵', desc: 'Teh hangat tawar.' },
+      { id: 'd3', name: 'Es Jeruk Peras', price: 12000, category: 'Minuman', emoji: '🍊', desc: 'Jeruk peras segar dengan es.' },
+      { id: 'd4', name: 'Kopi Susu Gula Aren', price: 18000, category: 'Minuman', emoji: '☕', desc: 'Kopi susu dengan gula aren asli.' },
+      { id: 'd5', name: 'Jus Alpukat', price: 22000, category: 'Minuman', emoji: '🥑', desc: 'Jus alpukat dengan susu coklat.' },
+      { id: 'd6', name: 'Air Mineral', price: 5000, category: 'Minuman', emoji: '💧', desc: 'Botol 600ml.' },
+      { id: 's1', name: 'Pisang Goreng Keju', price: 15000, category: 'Snack', emoji: '🍌', desc: 'Pisang goreng topping keju & coklat.' },
+      { id: 's2', name: 'Kentang Goreng', price: 18000, category: 'Snack', emoji: '🍟', desc: 'French fries dengan saus.' },
+    ];
+  },
+};
+
+// Migrasi nama default lama 'Warung Berkah' → 'Catat Resto' (sekali, aman & idempoten)
+Store._migrateLegacyName();
+/* ===== bluetooth.js ===== */
+/* ===== firebase.js ===== */
+/* ============================================================
+ * Firebase Cloud Sync — Firestore real-time
+ * Sinkronisasi data antar perangkat (menu, order, settings).
+ * Jika belum dikonfigurasi → otomatis fallback ke localStorage.
+ * ============================================================ */
+
+const Fb = {
+  app: null,
+  db: null,
+  configured: false,
+  unsub: [],
+  status: 'offline', // offline | connecting | connected | error
+
+  /* ---------- CONFIG ---------- */
+  getConfig() {
+    try {
+      return JSON.parse(localStorage.getItem('pos_fb_config') || 'null');
+    } catch {
+      return null;
+    }
+  },
+  saveConfig(cfg) {
+    localStorage.setItem('pos_fb_config', JSON.stringify(cfg));
+  },
+  clearConfig() {
+    localStorage.removeItem('pos_fb_config');
+  },
+
+  /* Parse config dari teks (support JSON atau snippet JS dari Firebase console) */
+  parseConfig(text) {
+    if (!text) return null;
+    // coba JSON dulu
+    try {
+      const o = JSON.parse(text);
+      if (o && o.apiKey) return o;
+    } catch {}
+    // cari {...} lalu evaluasi sebagai object
+    const m = text.match(/\{[\s\S]*\}/);
+    if (m) {
+      try {
+        const o = new Function('return ' + m[0])();
+        if (o && o.apiKey) return o;
+      } catch {}
+    }
+    return null;
+  },
+
+  /* ---------- INIT ---------- */
+  async init() {
+    const cfg = this.getConfig();
+    if (!cfg || !cfg.apiKey) {
+      this.configured = false;
+      this.status = 'offline';
+      return false;
+    }
+    if (typeof firebase === 'undefined') {
+      console.warn('Firebase SDK belum termuat.');
+      this.configured = false;
+      this.status = 'offline';
+      return false;
+    }
+    this.status = 'connecting';
+    Views.renderCloudStatus();
+    try {
+      // hindari double-init
+      try {
+        this.app = firebase.app('pos-resto');
+      } catch {
+        this.app = firebase.initializeApp(cfg, 'pos-resto');
+      }
+      this.db = this.app.firestore();
+      this.configured = true;
+      this._subscribe();
+      return true;
+    } catch (e) {
+      console.error('Firebase init error:', e);
+      this.configured = false;
+      this.status = 'error';
+      Views.renderCloudStatus();
+      return false;
+    }
+  },
+
+  disconnect() {
+    this.unsub.forEach((u) => { try { u(); } catch {} });
+    this.unsub = [];
+    if (this.app) { try { this.app.delete(); } catch {} }
+    this.app = null;
+    this.db = null;
+    this.configured = false;
+    this.status = 'offline';
+    Views.renderCloudStatus();
+  },
+
+  /* ---------- REAL-TIME LISTENERS ---------- */
+  _subscribe() {
+    this.unsub.forEach((u) => { try { u(); } catch {} });
+    this.unsub = [];
+
+    // MENU
+    this.unsub.push(
+      this.db.collection('menu').onSnapshot(
+        (snap) => {
+          const arr = [];
+          snap.forEach((d) => arr.push(d.data()));
+          if (arr.length === 0) {
+            // pertama kali: seed menu sampel ke cloud
+            this._seedMenu();
+            return;
+          }
+          arr.sort((a, b) => (a.category || '').localeCompare(b.category || ''));
+          Store.saveMenuLocal(arr);
+          Store._onChange('menu');
+          this.status = 'connected';
+          Views.renderCloudStatus();
+        },
+        (e) => { console.error('menu sub err', e); this.status = 'error'; Views.renderCloudStatus(); }
+      )
+    );
+
+    // ORDERS
+    this.unsub.push(
+      this.db.collection('orders').orderBy('createdAt', 'desc').limit(500).onSnapshot(
+        (snap) => {
+          const arr = [];
+          snap.forEach((d) => arr.push(d.data()));
+          Store.saveOrdersLocal(arr);
+          Store._onChange('orders');
+          this.status = 'connected';
+          Views.renderCloudStatus();
+        },
+        (e) => { console.error('orders sub err', e); }
+      )
+    );
+
+    // SETTINGS
+    this.unsub.push(
+      this.db.collection('config').doc('settings').onSnapshot(
+        (d) => {
+          if (d.exists) {
+            const s = d.data();
+            Store.saveSettingsLocal(s);
+            Store._onChange('settings');
+          }
+        },
+        (e) => { console.error('settings sub err', e); }
+      )
+    );
+  },
+
+  async _seedMenu() {
+    const sample = Store.sampleMenu();
+    const batch = this.db.batch();
+    sample.forEach((m) => batch.set(this.db.collection('menu').doc(m.id), m));
+    await batch.commit();
+  },
+
+  /* ---------- WRITE HELPERS (fire-and-forget) ---------- */
+  async addItem(item) {
+    if (!this.configured) return;
+    item.id = item.id || 'm' + Date.now();
+    await this.db.collection('menu').doc(item.id).set(item);
+    return item;
+  },
+  async updateItem(id, patch) {
+    if (!this.configured) return;
+    await this.db.collection('menu').doc(id).set(patch, { merge: true });
+  },
+  async deleteItem(id) {
+    if (!this.configured) return;
+    await this.db.collection('menu').doc(id).delete();
+  },
+  async saveOrder(order) {
+    if (!this.configured) return;
+    order.id = order.id || 'TRX' + Date.now();
+    await this.db.collection('orders').doc(order.id).set(order);
+    return order;
+  },
+  async deleteOrder(id) {
+    if (!this.configured) return;
+    await this.db.collection('orders').doc(id).delete();
+  },
+  async saveSettings(obj) {
+    if (!this.configured) return;
+    await this.db.collection('config').doc('settings').set(obj);
+  },
+};
+/* ===== bluetooth.js ===== */
+/* ============================================================
+ * Bluetooth Printer — Web Bluetooth API + ESC/POS
+ * Mendukung printer thermal Bluetooth umum (58mm / 80mm).
+ * Menggunakan ESC/POS command set standar.
+ * ============================================================ */
+
+const Printer = {
+  device: null,
+  characteristic: null,
+  state: { connected: false, name: '', error: '' },
+
+  /* Cek apakah browser mendukung Web Bluetooth */
+  isSupported() {
+    return typeof navigator !== 'undefined' && !!navigator.bluetooth;
+  },
+
+  /* ---------- KONEKSI KE PRINTER ---------- */
+  async connect() {
+    if (!this.isSupported()) {
+      this.state.error = 'Browser tidak mendukung Web Bluetooth. Gunakan Chrome/Edge.';
+      throw new Error(this.state.error);
+    }
+    try {
+      this.device = await navigator.bluetooth.requestDevice({
+        // Terima semua perangkat agar fleksibel terhadap berbagai merek printer
+        acceptAllDevices: true,
+        optionalServices: [
+          '000018f0-0000-1000-8000-00805f9b34fb', // service umum printer thermal (GATT 0x18F0)
+          '00001101-0000-1000-8000-00805f9b34fb', // SPP-like
+          '0000ff00-0000-1000-8000-00805f9b34fb',
+          '49535343-fe7d-4ae5-8fa9-9fafd205e455', // Nordic UART / banyak printer
+          '0000fee0-0000-1000-8000-00805f9b34fb',
+          '0000fee1-0000-1000-8000-00805f9b34fb',
+        ],
+      });
+
+      const server = await this.device.gatt.connect();
+      // Cari service yang punya characteristic writeable
+      const services = await this._discoverWritableChar(server);
+      if (!services) {
+        throw new Error('Tidak ada karakteristik tulis (write) yang ditemukan pada perangkat ini.');
+      }
+      this.characteristic = services.char;
+      this.device.addEventListener('gattserverdisconnected', () => this._onDisconnect());
+
+      this.state = { connected: true, name: this.device.name || 'Printer Bluetooth', error: '' };
+      return this.state;
+    } catch (e) {
+      this.state = { connected: false, name: '', error: e.message };
+      throw e;
+    }
+  },
+
+  async _discoverWritableChar(server) {
+    const services = await server.getPrimaryServices();
+    for (const svc of services) {
+      try {
+        const chars = await svc.getCharacteristics();
+        for (const ch of chars) {
+          if (ch.properties.write || ch.properties.writeWithoutResponse) {
+            return { svc, char: ch };
+          }
+        }
+      } catch (_) {
+        /* skip service yang tidak bisa dibaca */
+      }
+    }
+    return null;
+  },
+
+  _onDisconnect() {
+    this.state = { connected: false, name: '', error: 'Printer terputus.' };
+    this.device = null;
+    this.characteristic = null;
+    if (window.App) window.App.renderPrinterStatus();
+  },
+
+  disconnect() {
+    if (this.device && this.device.gatt.connected) {
+      this.device.gatt.disconnect();
+    }
+    this._onDisconnect();
+  },
+
+  /* ---------- KIRIM DATA MENTAH ---------- */
+  async _write(data) {
+    if (!this.characteristic) throw new Error('Printer belum terhubung.');
+    // Gunakan writeWithoutResponse bila tersedia (lebih cepat untuk printer thermal)
+    const useNoResp = this.characteristic.properties.writeWithoutResponse;
+    const chunks = this._chunk(data, 180); // potong agar tidak overload MTU
+    for (const c of chunks) {
+      if (useNoResp) {
+        await this.characteristic.writeValueWithoutResponse(c);
+      } else {
+        await this.characteristic.writeValueWithResponse(c);
+      }
+    }
+  },
+
+  _chunk(buffer, size) {
+    const out = [];
+    for (let i = 0; i < buffer.byteLength; i += size) {
+      out.push(buffer.slice(i, i + size));
+    }
+    return out;
+  },
+
+  /* ============================================================
+   * ESC/POS HELPERS — bangun byte array
+   * ============================================================ */
+  _enc: new TextEncoder(),
+
+  cmd: {
+    INIT: [0x1b, 0x40], // init printer
+    ALIGN_LEFT: [0x1b, 0x61, 0x00],
+    ALIGN_CENTER: [0x1b, 0x61, 0x01],
+    ALIGN_RIGHT: [0x1b, 0x61, 0x02],
+    BOLD_ON: [0x1b, 0x45, 0x01],
+    BOLD_OFF: [0x1b, 0x45, 0x00],
+    SIZE_NORMAL: [0x1d, 0x21, 0x00],
+    SIZE_DOUBLE_H: [0x1d, 0x21, 0x01],
+    SIZE_DOUBLE: [0x1d, 0x21, 0x11], // double width+height
+    CUT: [0x1d, 0x56, 0x42, 0x00], // full cut
+    FEED: n => [0x1b, 0x64, n], // feed n lines
+  },
+
+  _bytes(...arrs) {
+    const flat = arrs.flatMap((a) => (Array.isArray(a) ? a : Array.from(a)));
+    return new Uint8Array(flat);
+  },
+
+  _text(str) {
+    return this._enc.encode(str);
+  },
+
+  _line(str = '') {
+    return this._text(str + '\n');
+  },
+
+  _pad(str, width, align = 'left') {
+    str = String(str);
+    if (str.length >= width) return str.slice(0, width);
+    const space = ' '.repeat(width - str.length);
+    return align === 'right' ? space + str : str + space;
+  },
+
+  /* ---------- CETAK STRUK ---------- */
+  async printReceipt(order, settings) {
+    if (!this.state.connected) throw new Error('Printer belum terhubung.');
+
+    const W = 32; // lebar kolom (untuk printer 58mm ~32 char; 80mm ~48)
+    const cur = settings.currency || 'Rp';
+    const fmt = (n) => cur + ' ' + Math.round(n).toLocaleString('id-ID');
+
+    const parts = [];
+    // init
+    parts.push(this._bytes(this.cmd.INIT));
+    // header — tengah, bold, double
+    parts.push(this._bytes(this.cmd.ALIGN_CENTER, this.cmd.SIZE_DOUBLE, this.cmd.BOLD_ON));
+    parts.push(this._text(settings.restaurantName + '\n'));
+    parts.push(this._bytes(this.cmd.BOLD_OFF, this.cmd.SIZE_NORMAL));
+    parts.push(this._text(settings.address + '\n'));
+    parts.push(this._text(settings.phone + '\n'));
+    parts.push(this._bytes(this.cmd.SIZE_DOUBLE_H));
+    parts.push(this._text('================================\n'));
+    parts.push(this._bytes(this.cmd.SIZE_NORMAL, this.cmd.ALIGN_LEFT));
+
+    // info transaksi
+    const d = new Date(order.createdAt);
+    parts.push(this._text(this._pad('No', 10) + ': ' + order.id + '\n'));
+    parts.push(this._text(this._pad('Tanggal', 10) + ': ' + d.toLocaleString('id-ID') + '\n'));
+    parts.push(this._text(this._pad('Meja', 10) + ': ' + (order.table || '-') + '\n'));
+    parts.push(this._text(this._pad('Kasir', 10) + ': ' + (order.cashier || '-') + '\n'));
+    parts.push(this._text('-'.repeat(W) + '\n'));
+
+    // items
+    parts.push(this._bytes(this.cmd.SIZE_DOUBLE_H));
+    order.items.forEach((it) => {
+      const left = `${it.qty}x ${it.name}`;
+      const right = fmt(it.price * it.qty);
+      parts.push(this._text(left + '\n'));
+      parts.push(this._text(this._pad('', 4) + this._pad(right, W - 4, 'right') + '\n'));
+    });
+    parts.push(this._bytes(this.cmd.SIZE_NORMAL, this.cmd.ALIGN_LEFT));
+    parts.push(this._text('-'.repeat(W) + '\n'));
+
+    // totals
+    parts.push(this._text(this._pad('Subtotal', W - 14, 'left') + this._pad(fmt(order.totals.subtotal), 14, 'right') + '\n'));
+    if (order.totals.tax) parts.push(this._text(this._pad('Pajak', W - 14) + this._pad(fmt(order.totals.tax), 14, 'right') + '\n'));
+    if (order.totals.service) parts.push(this._text(this._pad('Layanan', W - 14) + this._pad(fmt(order.totals.service), 14, 'right') + '\n'));
+    parts.push(this._bytes(this.cmd.BOLD_ON, this.cmd.SIZE_DOUBLE_H));
+    parts.push(this._text(this._pad('TOTAL', W - 14) + this._pad(fmt(order.totals.grandTotal), 14, 'right') + '\n'));
+    parts.push(this._bytes(this.cmd.BOLD_OFF, this.cmd.SIZE_NORMAL));
+
+    parts.push(this._text(this._pad('Bayar (' + (order.payment || 'Tunai') + ')', W - 14) + this._pad(fmt(order.paid), 14, 'right') + '\n'));
+    parts.push(this._text(this._pad('Kembali', W - 14) + this._pad(fmt(order.change), 14, 'right') + '\n'));
+    parts.push(this._text('-'.repeat(W) + '\n'));
+
+    // footer
+    parts.push(this._bytes(this.cmd.ALIGN_CENTER));
+    parts.push(this._text(settings.footerNote + '\n'));
+    parts.push(this._text('www.warungberkah.id\n'));
+    parts.push(this._bytes(this.cmd.FEED(3), this.cmd.CUT));
+
+    // gabung & kirim
+    let merged = new Uint8Array(0);
+    parts.forEach((p) => {
+      const tmp = new Uint8Array(merged.length + p.length);
+      tmp.set(merged, 0);
+      tmp.set(p, merged.length);
+      merged = tmp;
+    });
+    await this._write(merged);
+    return true;
+  },
+
+  /* ---------- TEST PRINT ---------- */
+  async testPrint(settings) {
+    if (!this.state.connected) throw new Error('Printer belum terhubung.');
+    const parts = [];
+    parts.push(this._bytes(this.cmd.INIT, this.cmd.ALIGN_CENTER, this.cmd.SIZE_DOUBLE, this.cmd.BOLD_ON));
+    parts.push(this._text('TEST PRINT\n'));
+    parts.push(this._bytes(this.cmd.BOLD_OFF, this.cmd.SIZE_NORMAL));
+    parts.push(this._text('Printer terhubung dengan sukses!\n'));
+    parts.push(this._text(new Date().toLocaleString('id-ID') + '\n'));
+    parts.push(this._bytes(this.cmd.ALIGN_LEFT));
+    parts.push(this._text('--------------------------------\n'));
+    parts.push(this._text('Makanan  ................  Rp 0\n'));
+    parts.push(this._text('Minuman  ................  Rp 0\n'));
+    parts.push(this._bytes(this.cmd.FEED(3), this.cmd.CUT));
+    let merged = new Uint8Array(0);
+    parts.forEach((p) => {
+      const tmp = new Uint8Array(merged.length + p.length);
+      tmp.set(merged, 0);
+      tmp.set(p, merged.length);
+      merged = tmp;
+    });
+    await this._write(merged);
+    return true;
+  },
+};
+/* ===== views.js ===== */
+/* ============================================================
+ * Views — render logic untuk tiap halaman POS
+ * ============================================================ */
+
+const Views = {
+  fmt(n) {
+    const s = Store.getSettings();
+    return (s.currency || 'Rp') + ' ' + Math.round(n).toLocaleString('id-ID');
+  },
+
+  /* ============ DASHBOARD ============ */
+  dashboard() {
+    const s = Store.salesSummary(7);
+    const orders = Store.getOrders().slice(0, 5);
+    return `
+      <div class="stats">
+        ${this._statCard('💰', 'Pendapatan 7 Hari', this.fmt(s.totalRevenue), 'Total transaksi penjualan', 'red')}
+        ${this._statCard('🧾', 'Total Order', s.totalOrders + ' order', 'dalam 7 hari terakhir', 'green')}
+        ${this._statCard('📊', 'Rata-rata / Order', this.fmt(s.avgOrder), 'nilai transaksi rata-rata', 'amber')}
+        ${this._statCard('📅', 'Hari Ini', Store.getOrders().filter(o => o.createdAt.slice(0,10)===new Date().toISOString().slice(0,10)).length + ' order', 'transaksi hari ini', 'blue')}
+      </div>
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-head"><div><h3>Tren Penjualan</h3><div class="sub">7 hari terakhir</div></div></div>
+          <div class="card-pad"><div class="chart-wrap"><canvas id="salesChart"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><h3>Produk Terlaris</h3><div class="sub">7 hari terakhir</div></div></div>
+          <ul class="top-list">
+            ${s.topProducts.length ? s.topProducts.map((p, i) => `
+              <li>
+                <span class="top-rank" style="background:${['#ff4d2d','#ff8a3d','#f59e0b','#16a34a','#2563eb'][i]}">${i+1}</span>
+                <span class="top-name">${p.name}</span>
+                <span class="top-qty">${p.qty}x</span>
+              </li>`).join('') : '<div class="empty-state"><span class="em-ic">📭</span>Belum ada data penjualan</div>'}
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="margin-top:20px">
+        <div class="card-head"><div><h3>Transaksi Terbaru</h3><div class="sub">5 order terakhir</div></div></div>
+        ${orders.length ? `<table class="tbl"><thead><tr><th>No. Transaksi</th><th>Waktu</th><th>Meja</th><th>Item</th><th>Total</th></tr></thead><tbody>
+          ${orders.map(o => `<tr>
+            <td class="order-no">${o.id}</td>
+            <td>${new Date(o.createdAt).toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
+            <td>${o.table || '-'}</td>
+            <td>${o.items.length} item</td>
+            <td class="order-total">${this.fmt(o.totals.grandTotal)}</td>
+          </tr>`).join('')}
+        </tbody></table>` : `<div class="empty-state"><span class="em-ic">🧾</span>Belum ada transaksi. Mulai jualan di menu Kasir!</div>`}
+      </div>
+    `;
+  },
+
+  dashboardMount() {
+    const s = Store.salesSummary(7);
+    const ctx = document.getElementById('salesChart');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: s.byDay.map(d => d.label),
+        datasets: [{
+          label: 'Pendapatan',
+          data: s.byDay.map(d => d.revenue),
+          borderColor: '#ff4d2d', backgroundColor: 'rgba(255,77,45,.12)',
+          tension: .4, fill: true, borderWidth: 3,
+          pointBackgroundColor: '#ff4d2d', pointRadius: 4, pointHoverRadius: 6,
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => Views.fmt(c.parsed.y) } } },
+        scales: {
+          y: { ticks: { callback: (v) => 'Rp ' + (v/1000).toFixed(0) + 'k' }, grid: { color: '#f0f2f5' } },
+          x: { grid: { display: false } },
+        },
+      },
+    });
+  },
+
+  _statCard(ic, label, value, foot, color) {
+    return `<div class="stat-card">
+      <div class="stat-ic bg-${color}"><span class="ic-${color}">${ic}</span></div>
+      <div class="stat-label">${label}</div>
+      <div class="stat-value">${value}</div>
+      <div class="stat-foot">${foot}</div>
+    </div>`;
+  },
+
+  /* ============ POS (KASIR) ============ */
+  pos() {
+    return `
+      <div class="pos-layout">
+        <div class="pos-left">
+          <div class="pos-search">
+            <span class="ps-ic">🔍</span>
+            <input id="posSearch" placeholder="Cari menu..." />
+          </div>
+          <div class="pos-tabs" id="posTabs"></div>
+          <div class="menu-grid" id="menuGrid"></div>
+        </div>
+        <div class="cart" id="cartPanel"></div>
+      </div>
+    `;
+  },
+
+  posMount() {
+    POS.cart = POS.cart || [];
+    POS.filter = POS.filter || 'Semua';
+    POS.search = '';
+    const cats = ['Semua', ...new Set(Store.getMenu().map((m) => m.category))];
+    document.getElementById('posTabs').innerHTML = cats
+      .map((c) => `<button class="pos-tab ${c === POS.filter ? 'active' : ''}" data-cat="${c}">${c}</button>`)
+      .join('');
+    document.querySelectorAll('#posTabs .pos-tab').forEach((b) =>
+      b.addEventListener('click', () => { POS.filter = b.dataset.cat; Views.posMount(); })
+    );
+    document.getElementById('posSearch').addEventListener('input', (e) => {
+      POS.search = e.target.value.toLowerCase();
+      Views._renderMenuGrid();
+    });
+    this._renderMenuGrid();
+    this._renderCart();
+  },
+
+  _renderMenuGrid() {
+    let list = Store.getMenu();
+    if (POS.filter !== 'Semua') list = list.filter((m) => m.category === POS.filter);
+    if (POS.search) list = list.filter((m) => m.name.toLowerCase().includes(POS.search));
+    const grid = document.getElementById('menuGrid');
+    grid.innerHTML = list.length
+      ? list.map((m) => `
+        <button class="menu-tile" data-id="${m.id}">
+          <div class="mt-emoji">${m.emoji || '🍽️'}</div>
+          <div class="mt-body">
+            <div class="mt-name">${m.name}</div>
+            <div class="mt-price">${this.fmt(m.price)}</div>
+            <div class="mt-desc">${m.desc || m.category}</div>
+          </div>
+        </button>`).join('')
+      : `<div class="empty-state" style="grid-column:1/-1"><span class="em-ic">🍽️</span>Menu tidak ditemukan</div>`;
+    grid.querySelectorAll('.menu-tile').forEach((t) =>
+      t.addEventListener('click', () => POS.addToCart(t.dataset.id))
+    );
+  },
+
+  _renderCart() {
+    const panel = document.getElementById('cartPanel');
+    if (!panel) return;
+    const s = Store.getSettings();
+    const subtotal = POS.cart.reduce((a, i) => a + i.price * i.qty, 0);
+    const tax = Math.round((subtotal * (s.taxRate || 0)) / 100);
+    const service = Math.round((subtotal * (s.serviceCharge || 0)) / 100);
+    const grand = subtotal + tax + service;
+    if (!POS.cart.length) {
+      panel.innerHTML = `
+        <div class="cart-head"><h3>🛒 Keranjang</h3></div>
+        <div class="cart-empty"><span class="ce-ic">🛒</span>Keranjang kosong<br>Pilih menu di sebelah kiri untuk menambahkan</div>`;
+      return;
+    }
+    panel.innerHTML = `
+      <div class="cart-head">
+        <h3>🛒 Keranangan <span class="cart-count">${POS.cart.reduce((a,i)=>a+i.qty,0)}</span></h3>
+        <button class="cart-clear" onclick="POS.clearCart()">Hapus Semua</button>
+      </div>
+      <div class="cart-items">
+        ${POS.cart.map((it) => `
+          <div class="cart-line">
+            <span class="cl-emoji">${it.emoji || '🍽️'}</span>
+            <div class="cl-info">
+              <div class="cl-name">${it.name}</div>
+              <div class="cl-price">${this.fmt(it.price)}</div>
+            </div>
+            <div class="cl-qty">
+              <button class="qty-btn" onclick="POS.adj('${it.id}',-1)">−</button>
+              <span>${it.qty}</span>
+              <button class="qty-btn" onclick="POS.adj('${it.id}',1)">+</button>
+            </div>
+            <div class="cl-total">${this.fmt(it.price * it.qty)}</div>
+            <button class="cl-remove" onclick="POS.remove('${it.id}')">✕</button>
+          </div>`).join('')}
+      </div>
+      <div class="cart-meta">
+        <div class="meta-row"><label>Meja</label><input class="meta-input" id="metaTable" placeholder="No. meja" value="${POS.table || ''}" /></div>
+        <div class="meta-row"><label>Bayar</label>
+          <div class="pay-chips" id="payChips">
+            ${['Tunai','Debit','QRIS','GoPay'].map(p => `<div class="pay-chip ${POS.payment===p?'active':''}" data-pay="${p}">${p}</div>`).join('')}
+          </div>
+        </div>
+        <div class="meta-row"><label>Tunai</label><input class="meta-input" id="metaPaid" type="number" placeholder="Uang diterima" value="${POS.paid || ''}" /></div>
+      </div>
+      <div class="cart-totals">
+        <div class="total-row"><span>Subtotal</span><span>${this.fmt(subtotal)}</span></div>
+        ${tax ? `<div class="total-row"><span>Pajak (${s.taxRate}%)</span><span>${this.fmt(tax)}</span></div>` : ''}
+        ${service ? `<div class="total-row"><span>Layanan (${s.serviceCharge}%)</span><span>${this.fmt(service)}</span></div>` : ''}
+        <div class="total-row grand"><span>TOTAL</span><span class="tg-val">${this.fmt(grand)}</span></div>
+        ${POS.paid ? `<div class="total-row"><span>Kembalian</span><span>${this.fmt(Math.max(0, POS.paid - grand))}</span></div>` : ''}
+      </div>
+      <div class="cart-actions">
+        <button class="btn btn-ghost btn-sm" onclick="POS.previewReceipt()">👁️ Lihat Struk</button>
+        <button class="btn btn-primary" style="flex:1" onclick="POS.checkout()">💳 Bayar & Cetak</button>
+      </div>
+    `;
+    document.getElementById('metaTable').addEventListener('input', (e) => (POS.table = e.target.value));
+    document.getElementById('metaPaid').addEventListener('input', (e) => {
+      POS.paid = +e.target.value;
+      Views._renderCart();
+    });
+    document.querySelectorAll('#payChips .pay-chip').forEach((c) =>
+      c.addEventListener('click', () => { POS.payment = c.dataset.pay; Views._renderCart(); })
+    );
+  },
+
+  /* ============ MENU MANAGEMENT ============ */
+  menu() {
+    return `
+      <div class="toolbar">
+        <div class="search-mini"><span>🔍</span><input id="menuSearch" placeholder="Cari menu..." /></div>
+        <button class="btn btn-primary btn-sm" onclick="MenuUI.openForm()">➕ Tambah Menu</button>
+      </div>
+      <div class="table-wrap" id="menuTable"></div>
+    `;
+  },
+
+  menuMount() {
+    MenuUI.search = '';
+    document.getElementById('menuSearch').addEventListener('input', (e) => {
+      MenuUI.search = e.target.value.toLowerCase();
+      MenuUI.renderTable();
+    });
+    MenuUI.renderTable();
+  },
+
+  /* ============ ORDERS ============ */
+  orders() {
+    const orders = Store.getOrders();
+    return `
+      <div class="toolbar">
+        <h3 style="font-size:16px;font-weight:700">Riwayat Transaksi (${orders.length})</h3>
+        ${orders.length ? '<button class="btn btn-ghost btn-sm" onclick="if(confirm(\'Hapus semua riwayat?\')){localStorage.removeItem(Store.KEYS.orders);App.render(\'orders\');App.toast(\'Riwayat dihapus\',\'success\');}">🗑️ Hapus Semua</button>' : ''}
+      </div>
+      <div class="table-wrap">
+        ${orders.length ? `<table class="tbl"><thead><tr><th>No. Transaksi</th><th>Waktu</th><th>Meja</th><th>Items</th><th>Pembayaran</th><th>Total</th><th>Aksi</th></tr></thead><tbody>
+          ${orders.map(o => `<tr>
+            <td class="order-no">${o.id}</td>
+            <td>${new Date(o.createdAt).toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
+            <td>${o.table || '-'}</td>
+            <td>${o.items.map(i=>`${i.qty}x ${i.name}`).join(', ')}</td>
+            <td><span class="tcat tcat-Lainnya">${o.payment||'Tunai'}</span></td>
+            <td class="order-total">${this.fmt(o.totals.grandTotal)}</td>
+            <td><div class="row-actions">
+              <button title="Cetak ulang" onclick="POS.reprint('${o.id}')">🖨️</button>
+              <button class="del" title="Hapus" onclick="Store.deleteOrder('${o.id}');App.render('orders');App.toast('Order dihapus','success')">🗑️</button>
+            </div></td>
+          </tr>`).join('')}
+        </tbody></table>` : `<div class="empty-state"><span class="em-ic">📦</span>Belum ada transaksi tersimpan</div>`}
+      </div>
+    `;
+  },
+
+  /* ============ SETTINGS ============ */
+  settings() {
+    const s = Store.getSettings();
+    const supported = Printer.isSupported();
+    return `
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-head"><div><h3>Info Restoran</h3><div class="sub">Akan tampil di struk</div></div></div>
+          <div class="card-pad">
+            <div class="form-row"><label>Nama Restoran</label><input class="form-control" id="setResto" value="${s.restaurantName}" /></div>
+            <div class="form-row"><label>Alamat</label><textarea class="form-control" id="setAddr">${s.address}</textarea></div>
+            <div class="form-grid2">
+              <div class="form-row"><label>Telepon</label><input class="form-control" id="setPhone" value="${s.phone}" /></div>
+              <div class="form-row"><label>Simbol Mata Uang</label><input class="form-control" id="setCur" value="${s.currency}" /></div>
+            </div>
+            <div class="form-grid2">
+              <div class="form-row"><label>Pajak (%)</label><input class="form-control" id="setTax" type="number" value="${s.taxRate}" /></div>
+              <div class="form-row"><label>Biaya Layanan (%)</label><input class="form-control" id="setSvc" type="number" value="${s.serviceCharge}" /></div>
+            </div>
+            <div class="form-row"><label>Catatan Footer Struk</label><input class="form-control" id="setFooter" value="${s.footerNote}" /></div>
+            <button class="btn btn-primary btn-block" onclick="SettingsUI.save()">💾 Simpan Pengaturan</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><h3>🖨️ Printer Bluetooth</h3><div class="sub">Cetak struk via thermal printer</div></div></div>
+          <div class="card-pad">
+            <div class="printer-status" style="background:var(--bg);border:1px solid var(--line);margin-bottom:14px" id="setPrinterStatus"></div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <button class="btn btn-primary btn-block" id="btnSetConnect" onclick="SettingsUI.connectPrinter()">🔵 Hubungkan Printer</button>
+              <button class="btn btn-ghost btn-block" onclick="SettingsUI.testPrint()">🧾 Cetak Tes</button>
+              <button class="btn btn-ghost btn-block" onclick="SettingsUI.disconnect()">⚪ Putuskan</button>
+            </div>
+            <div style="margin-top:18px;padding:14px;background:var(--primary-soft);border-radius:10px;font-size:12px;color:var(--ink-soft);line-height:1.6">
+              <b style="color:var(--primary)">💡 Tips:</b><br>
+              ${supported
+                ? 'Pastikan printer Bluetooth thermal Anda sudah menyala dan dalam jangkauan. Klik "Hubungkan Printer" lalu pilih perangkat Anda dari daftar (mis. printer 58mm/80mm merek Xprinter, Goojia, dll).'
+                : '⚠️ Browser ini tidak mendukung Web Bluetooth API. Gunakan Google Chrome atau Microsoft Edge di Android/Windows untuk fitur cetak Bluetooth.'}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:20px">
+        <div class="card-head"><div><h3>☁️ Sinkronisasi Cloud (Firebase)</h3><div class="sub">Sinkron data antar laptop &amp; HP — real-time</div></div>
+          <span id="cloudBadge"></span>
+        </div>
+        <div class="card-pad">
+          <div id="cloudStatusBox" style="margin-bottom:16px"></div>
+          <div class="form-row"><label>Tempel Firebase Config</label>
+            <textarea class="form-control" id="fbConfig" placeholder='Salin dari Firebase console, contoh:&#10;{&#10;  "apiKey": "AIza...",&#10;  "authDomain": "myapp.firebaseapp.com",&#10;  "projectId": "myapp",&#10;  "storageBucket": "myapp.appspot.com",&#10;  "messagingSenderId": "123456",&#10;  "appId": "1:123:web:abc"&#10;}' style="min-height:130px;font-family:monospace;font-size:12px"></textarea>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-primary btn-sm" onclick="CloudUI.save()">🔗 Hubungkan Cloud</button>
+            <button class="btn btn-ghost btn-sm" onclick="CloudUI.disconnect()">⚪ Putuskan</button>
+          </div>
+          <div style="margin-top:18px;padding:14px;background:#eaf2ff;border-radius:10px;font-size:12px;color:var(--ink-soft);line-height:1.7">
+            <b style="color:#2563eb">📋 Cara dapat config:</b><br>
+            1. Buka <b>console.firebase.google.com</b> → buat project baru<br>
+            2. Tambahkan Web App (ikon <code>&lt;/&gt;</code>) → salin <b>firebaseConfig</b><br>
+            3. Aktifkan <b>Firestore Database</b> → mulai dalam <b>mode pengujian/test</b><br>
+            4. Tempel config di atas → klik <b>Hubungkan Cloud</b><br>
+            Setelah terhubung, data menu/order/pengaturan langsung sinkron ke semua perangkat.
+          </div>
+        </div>
+      </div>
+    `;
+  },
+
+  settingsMount() {
+    this.renderPrinterStatus();
+    this.renderCloudStatus();
+    // isi textarea dgn config yg tersimpan (tampil saja)
+    const ta = document.getElementById('fbConfig');
+    const cfg = Fb.getConfig();
+    if (ta && cfg) ta.value = JSON.stringify(cfg, null, 2);
+  },
+
+  renderCloudStatus() {
+    const box = document.getElementById('cloudStatusBox');
+    const badge = document.getElementById('cloudBadge');
+    const st = Fb.status;
+    const map = {
+      offline: { dot: 'dot-off', color: 'var(--ink-soft)', label: 'Belum terhubung (mode lokal)' },
+      connecting: { dot: 'dot-on', color: '#f59e0b', label: 'Menghubungkan…' },
+      connected: { dot: 'dot-on', color: 'var(--green)', label: 'Terhubung & sinkron real-time ✅' },
+      error: { dot: 'dot-off', color: 'var(--red)', label: 'Gagal koneksi (cek config)' },
+    };
+    const m = map[st] || map.offline;
+    const html = `<div class="printer-status" style="background:var(--bg);border:1px solid var(--line);margin-bottom:0"><span class="dot ${m.dot}"></span><span class="printer-label" style="color:${m.color};font-weight:600">${m.label}</span></div>`;
+    if (box) box.innerHTML = html;
+    if (badge) badge.innerHTML = `<span class="dot ${m.dot}"></span><span style="font-size:12px;font-weight:600;color:${m.color}">${st}</span>`;
+  },
+
+  renderPrinterStatus() {
+    const el = document.getElementById('setPrinterStatus');
+    const box = document.getElementById('printerBox');
+    const sidebarEl = document.getElementById('printerStatus');
+    const btn = document.getElementById('btnConnectPrinter');
+    const btnSet = document.getElementById('btnSetConnect');
+    const st = Printer.state;
+    const html = st.connected
+      ? `<span class="dot dot-on"></span><span class="printer-label" style="color:var(--green);font-weight:600">Terhubung: ${st.name}</span>`
+      : `<span class="dot dot-off"></span><span class="printer-label" style="color:var(--ink-soft)">${st.error || 'Tidak terhubung'}</span>`;
+    if (el) el.innerHTML = html;
+    if (sidebarEl) sidebarEl.innerHTML = html;
+    if (btn) { btn.textContent = st.connected ? 'Putuskan Printer' : 'Hubungkan Printer'; btn.className = 'btn-printer' + (st.connected ? ' connected' : ''); }
+    if (btnSet) { btnSet.textContent = st.connected ? '⚪ Putuskan' : '🔵 Hubungkan Printer'; }
+  },
+};
+
+/* ============================================================
+ * Menu UI — CRUD form & table
+ * ============================================================ */
+const MenuUI = {
+  EMOJIS: ['🍚','🍜','🍗','🍢','🥗','🍲','🧊','🍵','🍊','☕','🥑','💧','🍌','🍟','🍰','🍦','🥤','🍺','🍞','🥪','🍤','🍛','🥘','🧁','🍪'],
+
+  renderTable() {
+    let list = Store.getMenu();
+    if (this.search) list = list.filter((m) => m.name.toLowerCase().includes(this.search) || m.category.toLowerCase().includes(this.search));
+    const wrap = document.getElementById('menuTable');
+    wrap.innerHTML = `<table class="tbl"><thead><tr><th>Menu</th><th>Kategori</th><th>Deskripsi</th><th>Harga</th><th>Aksi</th></tr></thead><tbody>
+      ${list.map((m) => `<tr>
+        <td><b>${m.emoji || '🍽️'} ${m.name}</b></td>
+        <td><span class="tcat tcat-${m.category}">${m.category}</span></td>
+        <td style="color:var(--ink-soft)">${m.desc || '-'}</td>
+        <td class="tprice">${Views.fmt(m.price)}</td>
+        <td><div class="row-actions">
+          <button onclick="MenuUI.openForm('${m.id}')">✏️</button>
+          <button class="del" onclick="MenuUI.del('${m.id}')">🗑️</button>
+        </div></td>
+      </tr>`).join('')}
+    </tbody></table>` + (!list.length ? `<div class="empty-state"><span class="em-ic">🍽️</span>Belum ada menu. Tambahkan sekarang!</div>` : '');
+  },
+
+  openForm(id) {
+    const m = id ? Store.getMenu().find((x) => x.id === id) : { emoji: '🍽️', category: 'Makanan' };
+    App.modal(`
+      <div class="modal-head"><h3>${id ? 'Edit Menu' : 'Tambah Menu'}</h3><button class="modal-close" onclick="App.closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="form-row"><label>Nama Menu</label><input class="form-control" id="mfName" value="${m.name || ''}" placeholder="cth. Nasi Goreng Spesial" /></div>
+        <div class="form-grid2">
+          <div class="form-row"><label>Kategori</label>
+            <select class="form-control" id="mfCat">
+              ${['Makanan','Minuman','Snack','Lainnya'].map((c) => `<option ${m.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-row"><label>Harga (Rp)</label><input class="form-control" id="mfPrice" type="number" value="${m.price || ''}" placeholder="25000" /></div>
+        </div>
+        <div class="form-row"><label>Deskripsi (opsional)</label><textarea class="form-control" id="mfDesc" placeholder="Keterangan singkat menu...">${m.desc || ''}</textarea></div>
+        <div class="form-row"><label>Ikon</label><div class="emoji-picker" id="mfEmoji"></div></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost btn-sm" onclick="App.closeModal()">Batal</button>
+        <button class="btn btn-primary btn-sm" onclick="MenuUI.save('${m.id || ''}')">💾 Simpan</button>
+      </div>
+    `);
+    const ep = document.getElementById('mfEmoji');
+    let chosen = m.emoji || '🍽️';
+    ep.innerHTML = this.EMOJIS.map((e) => `<div class="emoji-opt ${e === chosen ? 'active' : ''}" data-e="${e}">${e}</div>`).join('');
+    ep.querySelectorAll('.emoji-opt').forEach((o) => o.addEventListener('click', () => {
+      chosen = o.dataset.e; ep.querySelectorAll('.emoji-opt').forEach((x) => x.classList.remove('active')); o.classList.add('active');
+    }));
+    this._chosenEmoji = () => chosen;
+  },
+
+  save(id) {
+    const name = document.getElementById('mfName').value.trim();
+    const price = +document.getElementById('mfPrice').value;
+    if (!name) return App.toast('Nama menu wajib diisi', 'error');
+    if (!price || price < 0) return App.toast('Harga tidak valid', 'error');
+    const obj = {
+      name, price,
+      category: document.getElementById('mfCat').value,
+      desc: document.getElementById('mfDesc').value.trim(),
+      emoji: this._chosenEmoji(),
+    };
+    if (id) { Store.updateItem(id, obj); App.toast('Menu diperbarui', 'success'); }
+    else { Store.addItem(obj); App.toast('Menu ditambahkan', 'success'); }
+    App.closeModal();
+    this.renderTable();
+    if (App.currentView === 'pos') Views.posMount();
+  },
+
+  del(id) {
+    const m = Store.getMenu().find((x) => x.id === id);
+    if (confirm(`Hapus menu "${m.name}"?`)) { Store.deleteItem(id); this.renderTable(); App.toast('Menu dihapus', 'success'); }
+  },
+};
+
+/* ============================================================
+ * POS Logic — cart & checkout
+ * ============================================================ */
+const POS = {
+  cart: [], filter: 'Semua', search: '', table: '', payment: 'Tunai', paid: 0,
+
+  addToCart(id) {
+    const m = Store.getMenu().find((x) => x.id === id);
+    if (!m) return;
+    const ex = this.cart.find((x) => x.id === id);
+    if (ex) ex.qty++;
+    else this.cart.push({ ...m, qty: 1 });
+    Views._renderCart();
+  },
+
+  adj(id, d) {
+    const it = this.cart.find((x) => x.id === id);
+    if (!it) return;
+    it.qty += d;
+    if (it.qty <= 0) this.cart = this.cart.filter((x) => x.id !== id);
+    Views._renderCart();
+  },
+
+  remove(id) { this.cart = this.cart.filter((x) => x.id !== id); Views._renderCart(); },
+  clearCart() { if (this.cart.length && confirm('Kosongkan keranjang?')) { this.cart = []; Views._renderCart(); } },
+
+  _calc() {
+    const s = Store.getSettings();
+    const subtotal = this.cart.reduce((a, i) => a + i.price * i.qty, 0);
+    const tax = Math.round((subtotal * (s.taxRate || 0)) / 100);
+    const service = Math.round((subtotal * (s.serviceCharge || 0)) / 100);
+    const grandTotal = subtotal + tax + service;
+    return { subtotal, tax, service, grandTotal };
+  },
+
+  checkout() {
+    if (!this.cart.length) return App.toast('Keranjang masih kosong', 'error');
+    const totals = this._calc();
+    if (this.paid && this.paid < totals.grandTotal) return App.toast('Uang diterima kurang dari total', 'error');
+    const order = {
+      id: 'TRX' + Date.now(),
+      items: this.cart.map((i) => ({ id: i.id, name: i.name, price: i.price, qty: i.qty, emoji: i.emoji })),
+      totals,
+      table: this.table,
+      payment: this.payment,
+      paid: this.paid || totals.grandTotal,
+      change: (this.paid || totals.grandTotal) - totals.grandTotal,
+      cashier: 'Kasir',
+      createdAt: new Date().toISOString(),
+    };
+    Store.saveOrder(order);
+    App.toast('Transaksi tersimpan! Mencetak struk...', 'success');
+
+    // Cetak struk
+    const s = Store.getSettings();
+    if (Printer.state.connected) {
+      Printer.printReceipt(order, s).then(
+        () => App.toast('Struk berhasil dicetak 🖨️', 'success'),
+        (e) => { App.toast('Gagal cetak Bluetooth: ' + e.message, 'error'); this._showReceiptPreview(order); }
+      );
+    } else {
+      this._showReceiptPreview(order);
+    }
+
+    // reset
+    this.cart = []; this.table = ''; this.paid = 0; this.payment = 'Tunai';
+    Views._renderCart();
+    setTimeout(() => { if (App.currentView === 'dashboard') App.render('dashboard'); }, 400);
+  },
+
+  previewReceipt() {
+    if (!this.cart.length) return App.toast('Keranjang kosong', 'error');
+    const totals = this._calc();
+    const order = {
+      id: 'TRX' + Date.now(), items: this.cart, totals,
+      table: this.table, payment: this.payment,
+      paid: this.paid || totals.grandTotal, change: (this.paid || totals.grandTotal) - totals.grandTotal,
+      createdAt: new Date().toISOString(),
+    };
+    this._showReceiptPreview(order, true);
+  },
+
+  reprint(id) {
+    const order = Store.getOrders().find((o) => o.id === id);
+    if (!order) return;
+    const s = Store.getSettings();
+    if (Printer.state.connected) {
+      Printer.printReceipt(order, s).then(() => App.toast('Struk dicetak ulang', 'success'), (e) => { App.toast('Gagal: ' + e.message, 'error'); this._showReceiptPreview(order); });
+    } else { this._showReceiptPreview(order); }
+  },
+
+  _showReceiptPreview(order, isPreview = false) {
+    const s = Store.getSettings();
+    App.modal(`
+      <div class="modal-head"><h3>🧾 Struk Transaksi</h3><button class="modal-close" onclick="App.closeModal()">✕</button></div>
+      <div class="modal-body"><div class="receipt">${this._receiptText(order, s)}</div></div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ Cetak (Browser)</button>
+        ${Printer.state.connected ? `<button class="btn btn-primary btn-sm" onclick="Printer.printReceipt(${JSON.stringify(order).replace(/"/g,'&quot;')}, ${JSON.stringify(s).replace(/"/g,'&quot;')});App.toast('Struk dikirim ke printer','success')">🔵 Cetak Bluetooth</button>` : ''}
+        <button class="btn btn-primary btn-sm" onclick="App.closeModal()">Tutup</button>
+      </div>
+    `);
+  },
+
+  _receiptText(order, s) {
+    const fmt = (n) => (s.currency || 'Rp') + ' ' + Math.round(n).toLocaleString('id-ID');
+    const line = '-'.repeat(30);
+    let t = '';
+    t += `      ${s.restaurantName}\n`;
+    t += `      ${s.address}\n`;
+    t += `          ${s.phone}\n`;
+    t += line + '\n';
+    t += `No    : ${order.id}\n`;
+    t += `Tgl   : ${new Date(order.createdAt).toLocaleString('id-ID')}\n`;
+    t += `Meja  : ${order.table || '-'}\n`;
+    t += `Kasir : ${order.cashier || 'Kasir'}\n`;
+    t += line + '\n';
+    order.items.forEach((it) => {
+      t += `${it.qty}x ${it.name}\n`;
+      t += `    ${fmt(it.price * it.qty)}\n`;
+    });
+    t += line + '\n';
+    t += `Subtotal        ${fmt(order.totals.subtotal)}\n`;
+    if (order.totals.tax) t += `Pajak           ${fmt(order.totals.tax)}\n`;
+    if (order.totals.service) t += `Layanan         ${fmt(order.totals.service)}\n`;
+    t += `TOTAL           ${fmt(order.totals.grandTotal)}\n`;
+    t += `Bayar(${order.payment})  ${fmt(order.paid)}\n`;
+    t += `Kembali         ${fmt(order.change)}\n`;
+    t += line + '\n';
+    t += `   ${s.footerNote}\n`;
+    return t;
+  },
+};
+
+/* ============================================================
+ * Settings UI
+ * ============================================================ */
+const SettingsUI = {
+  save() {
+    const obj = {
+      restaurantName: document.getElementById('setResto').value.trim() || 'Restoran',
+      address: document.getElementById('setAddr').value.trim(),
+      phone: document.getElementById('setPhone').value.trim(),
+      currency: document.getElementById('setCur').value.trim() || 'Rp',
+      taxRate: +document.getElementById('setTax').value || 0,
+      serviceCharge: +document.getElementById('setSvc').value || 0,
+      footerNote: document.getElementById('setFooter').value.trim(),
+    };
+    Store.saveSettings(obj);
+    App.toast('Pengaturan disimpan', 'success');
+    document.getElementById('brandName').textContent = obj.restaurantName;
+  },
+
+  async connectPrinter() {
+    if (Printer.state.connected) { Printer.disconnect(); Views.renderPrinterStatus(); App.toast('Printer diputuskan', 'success'); return; }
+    App.toast('Menghubungkan ke printer...', 'success');
+    try {
+      await Printer.connect();
+      Views.renderPrinterStatus();
+      App.toast('Printer terhubung: ' + Printer.state.name, 'success');
+    } catch (e) {
+      Views.renderPrinterStatus();
+      App.toast('Gagal: ' + e.message, 'error');
+    }
+  },
+
+  async testPrint() {
+    if (!Printer.state.connected) return App.toast('Hubungkan printer dulu', 'error');
+    try { await Printer.testPrint(Store.getSettings()); App.toast('Tes cetak berhasil 🖨️', 'success'); }
+    catch (e) { App.toast('Gagal cetak: ' + e.message, 'error'); }
+  },
+
+  disconnect() {
+    if (!Printer.state.connected) return App.toast('Printer belum terhubung', 'error');
+    Printer.disconnect();
+    Views.renderPrinterStatus();
+    App.toast('Printer diputuskan', 'success');
+  },
+};
+
+/* ============================================================
+ * Cloud UI — Firebase connect/disconnect
+ * ============================================================ */
+const CloudUI = {
+  save() {
+    const text = document.getElementById('fbConfig').value;
+    const cfg = Fb.parseConfig(text);
+    if (!cfg || !cfg.apiKey) {
+      App.toast('Config tidak valid. Pastikan ada apiKey.', 'error');
+      return;
+    }
+    Fb.saveConfig(cfg);
+    App.toast('Config disimpan, menghubungkan...', 'success');
+    Fb.disconnect();
+    Fb.init().then((ok) => {
+      if (ok) {
+        App.toast('Terhubung ke cloud! Data mulai sinkron ☁️', 'success');
+        Views.renderCloudStatus();
+      } else {
+        App.toast('Gagal koneksi. Cek config & aturan Firestore.', 'error');
+        Views.renderCloudStatus();
+      }
+    });
+  },
+  disconnect() {
+    if (!Fb.getConfig()) return App.toast('Belum ada config', 'error');
+    Fb.disconnect();
+    App.toast('Cloud diputuskan, kembali mode lokal', 'success');
+  },
+};
+/* ===== app.js ===== */
+/* ============================================================
+ * App Controller — router, navigasi, modal, toast
+ * ============================================================ */
+
+const App = {
+  currentView: 'dashboard',
+
+  VIEWS: {
+    dashboard: { title: 'Dashboard', render: () => Views.dashboard(), mount: () => Views.dashboardMount() },
+    pos: { title: 'Kasir', render: () => Views.pos(), mount: () => Views.posMount() },
+    menu: { title: 'Manajemen Menu', render: () => Views.menu(), mount: () => Views.menuMount() },
+    orders: { title: 'Riwayat Order', render: () => Views.orders(), mount: () => {} },
+    settings: { title: 'Pengaturan', render: () => Views.settings(), mount: () => Views.settingsMount() },
+  },
+
+  init() {
+    // nama restoran di sidebar
+    document.getElementById('brandName').textContent = Store.getSettings().restaurantName;
+    // tanggal hari ini
+    document.getElementById('todayDate').textContent = new Date().toLocaleDateString('id-ID', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    });
+
+    // navigasi
+    document.querySelectorAll('.nav-item').forEach((n) =>
+      n.addEventListener('click', () => this.render(n.dataset.view))
+    );
+
+    // toggle sidebar (mobile)
+    const toggle = document.getElementById('menuToggle');
+    const scrim = document.createElement('div');
+    scrim.className = 'scrim';
+    document.body.appendChild(scrim);
+    toggle.addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+      scrim.classList.toggle('show');
+    });
+    scrim.addEventListener('click', () => {
+      document.getElementById('sidebar').classList.remove('open');
+      scrim.classList.remove('show');
+    });
+
+    // tombol printer di sidebar
+    document.getElementById('btnConnectPrinter').addEventListener('click', () => SettingsUI.connectPrinter());
+
+    // tampilkan view default
+    this.renderPrinterStatus();
+    this.render('dashboard');
+  },
+
+  render(view) {
+    if (!this.VIEWS[view]) view = 'dashboard';
+    this.currentView = view;
+    const cfg = this.VIEWS[view];
+    document.getElementById('pageTitle').textContent = cfg.title;
+    document.getElementById('viewRoot').innerHTML = cfg.render();
+    document.querySelectorAll('.nav-item').forEach((n) =>
+      n.classList.toggle('active', n.dataset.view === view)
+    );
+    // tutup sidebar mobile
+    document.getElementById('sidebar').classList.remove('open');
+    document.querySelector('.scrim')?.classList.remove('show');
+    // mount (chart / interaksi)
+    if (cfg.mount) setTimeout(() => cfg.mount(), 0);
+    window.scrollTo(0, 0);
+  },
+
+  renderPrinterStatus() {
+    Views.renderPrinterStatus();
+  },
+
+  /* ---- MODAL ---- */
+  modal(html) {
+    const root = document.getElementById('modalRoot');
+    root.innerHTML = `<div class="modal-backdrop" onclick="App.closeModal()"></div><div class="modal">${html}</div>`;
+    root.classList.add('show');
+  },
+  closeModal() {
+    document.getElementById('modalRoot').classList.remove('show');
+    document.getElementById('modalRoot').innerHTML = '';
+  },
+
+  /* ---- TOAST ---- */
+  toast(msg, type = '') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast show ' + type;
+    clearTimeout(this._toastT);
+    this._toastT = setTimeout(() => (el.className = 'toast ' + type), 2600);
+  },
+};
+
+// boot
+document.addEventListener('DOMContentLoaded', () => {
+  App.init();
+  // init Firebase cloud sync (async, no-op jika belum dikonfigurasi)
+  if (typeof Fb !== 'undefined') Fb.init();
+});
+</script>
+</body>
+</html>
