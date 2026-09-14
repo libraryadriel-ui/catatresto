@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Catat Resto POS — Sistem Kasir Restoran</title>
+<title>Waroeng Legend POS — Sistem Kasir Restoran</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <style>
 /* ============================================================
- * Catat Resto POS — Stylesheet
+ * Waroeng Legend POS — Stylesheet
  * Desain modern, aksen merah-oranye (terinspirasi MokaPOS)
  * ============================================================ */
 
@@ -415,7 +415,7 @@ textarea.form-control { resize: vertical; min-height: 64px; }
     <div class="brand">
       <div class="brand-logo">🍽️</div>
       <div class="brand-text">
-        <span class="brand-name" id="brandName">Catat Resto</span>
+        <span class="brand-name" id="brandName">Waroeng Legend</span>
         <span class="brand-sub">POS System</span>
       </div>
     </div>
@@ -469,9 +469,9 @@ const Store = {
   /* ---------- DEFAULT SETTINGS ---------- */
   defaultSettings() {
     return {
-      restaurantName: 'Catat Resto',
-      address: 'Jl. Merdeka No. 45, Jakarta',
-      phone: '0812-3456-7890',
+      restaurantName: 'Waroeng Legend',
+      address: 'Jalan Parang Tritis Raya 1AH, Ancol, Pademangan, Jakarta Utara, 14430',
+      phone: '0851-3937-9836',
       currency: 'Rp',
       taxRate: 0,
       serviceCharge: 0,
@@ -479,17 +479,29 @@ const Store = {
     };
   },
 
-  /* ---------- MIGRASI NAMA DEFAULT LAMA → 'Catat Resto' ---------- */
+  /* ---------- MIGRASI DATA DEFAULT LAMA → 'Waroeng Legend' ---------- */
   _migrateLegacyName() {
     try {
       const raw = localStorage.getItem(this.KEYS.settings);
-      if (raw) {
-        const s = JSON.parse(raw);
-        if (s.restaurantName === 'Warung Berkah') {
-          s.restaurantName = 'Catat Resto';
-          localStorage.setItem(this.KEYS.settings, JSON.stringify(s));
-        }
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      let changed = false;
+      // Nama: rantai default lama ('Warung Berkah' / 'Catat Resto') → 'Waroeng Legend'
+      if (s.restaurantName === 'Warung Berkah' || s.restaurantName === 'Catat Resto') {
+        s.restaurantName = 'Waroeng Legend';
+        changed = true;
       }
+      // Alamat default lama
+      if (s.address === 'Jl. Merdeka No. 45, Jakarta') {
+        s.address = 'Jalan Parang Tritis Raya 1AH, Ancol, Pademangan, Jakarta Utara, 14430';
+        changed = true;
+      }
+      // Telepon default lama
+      if (s.phone === '0812-3456-7890') {
+        s.phone = '0851-3937-9836';
+        changed = true;
+      }
+      if (changed) localStorage.setItem(this.KEYS.settings, JSON.stringify(s));
     } catch (e) {}
   },
 
@@ -633,7 +645,7 @@ const Store = {
   },
 };
 
-// Migrasi nama default lama 'Warung Berkah' → 'Catat Resto' (sekali, aman & idempoten)
+// Migrasi data default lama → 'Waroeng Legend' (sekali, aman & idempoten)
 Store._migrateLegacyName();
 /* ===== bluetooth.js ===== */
 /* ===== firebase.js ===== */

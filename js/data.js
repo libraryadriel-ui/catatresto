@@ -14,9 +14,9 @@ const Store = {
   /* ---------- DEFAULT SETTINGS ---------- */
   defaultSettings() {
     return {
-      restaurantName: 'Catat Resto',
-      address: 'Jl. Merdeka No. 45, Jakarta',
-      phone: '0812-3456-7890',
+      restaurantName: 'Waroeng Legend',
+      address: 'Jalan Parang Tritis Raya 1AH, Ancol, Pademangan, Jakarta Utara, 14430',
+      phone: '0851-3937-9836',
       currency: 'Rp',
       taxRate: 0,
       serviceCharge: 0,
@@ -24,17 +24,29 @@ const Store = {
     };
   },
 
-  /* ---------- MIGRASI NAMA DEFAULT LAMA → 'Catat Resto' ---------- */
+  /* ---------- MIGRASI DATA DEFAULT LAMA → 'Waroeng Legend' ---------- */
   _migrateLegacyName() {
     try {
       const raw = localStorage.getItem(this.KEYS.settings);
-      if (raw) {
-        const s = JSON.parse(raw);
-        if (s.restaurantName === 'Warung Berkah') {
-          s.restaurantName = 'Catat Resto';
-          localStorage.setItem(this.KEYS.settings, JSON.stringify(s));
-        }
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      let changed = false;
+      // Nama: rantai default lama ('Warung Berkah' / 'Catat Resto') → 'Waroeng Legend'
+      if (s.restaurantName === 'Warung Berkah' || s.restaurantName === 'Catat Resto') {
+        s.restaurantName = 'Waroeng Legend';
+        changed = true;
       }
+      // Alamat default lama
+      if (s.address === 'Jl. Merdeka No. 45, Jakarta') {
+        s.address = 'Jalan Parang Tritis Raya 1AH, Ancol, Pademangan, Jakarta Utara, 14430';
+        changed = true;
+      }
+      // Telepon default lama
+      if (s.phone === '0812-3456-7890') {
+        s.phone = '0851-3937-9836';
+        changed = true;
+      }
+      if (changed) localStorage.setItem(this.KEYS.settings, JSON.stringify(s));
     } catch (e) {}
   },
 
@@ -178,5 +190,5 @@ const Store = {
   },
 };
 
-// Migrasi nama default lama 'Warung Berkah' → 'Catat Resto' (sekali, aman & idempoten)
+// Migrasi data default lama → 'Waroeng Legend' (sekali, aman & idempoten)
 Store._migrateLegacyName();
