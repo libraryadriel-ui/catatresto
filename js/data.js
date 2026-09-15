@@ -9,7 +9,12 @@ const Store = {
     menu: 'pos_menu_items',
     orders: 'pos_orders',
     settings: 'pos_settings',
+    menuVersion: 'pos_menu_version',
   },
+  // Versi menu sampel saat ini. Naikkan nilai ini saat menu default diganti.
+  // Saat app load, jika versi tersimpan < ini → menu lama otomatis di-replace
+  // dengan sampel terbaru (berlaku lokal + sinkron ke cloud).
+  MENU_VERSION: 2,
 
   /* ---------- DEFAULT SETTINGS ---------- */
   defaultSettings() {
@@ -84,20 +89,27 @@ const Store = {
   /* ---------- MENU ITEMS ---------- */
   getMenu() {
     const raw = localStorage.getItem(this.KEYS.menu);
+    const storedVersion = parseInt(localStorage.getItem(this.KEYS.menuVersion) || '0', 10);
     if (raw) {
       const arr = JSON.parse(raw);
-      // Migrasi: ganti menu jika masih berisi sampel lama (Nasi Goreng Spesial / id f1)
-      if (arr.some((it) => it.id === 'f1' || it.name === 'Nasi Goreng Spesial')) {
-        const sample = this.sampleMenu();
-        this.saveMenuLocal(sample);
-        Fb.saveMenu(sample);
-        return sample;
+      // Deteksi menu lama: versi lebih rendah ATAU mengandung tanda sampel lama
+      const looksStale = arr.some(
+        (it) => it.id === 'f1' || it.name === 'Nasi Goreng Spesial'
+      );
+      if (storedVersion >= this.MENU_VERSION && !looksStale) {
+        return arr; // up-to-date → pertahankan (termasuk edit user)
       }
-      return arr;
+      // menu lama / kedaluwarsa → ganti sampel terbaru
+      const sample = this.sampleMenu();
+      this.saveMenuLocal(sample);
+      localStorage.setItem(this.KEYS.menuVersion, String(this.MENU_VERSION));
+      Fb.saveMenu(sample); // sinkron ke cloud (no-op jika belum dikonfigurasi)
+      return sample;
     }
-    // belum ada — pakai sample
+    // belum ada menu tersimpan → pakai sampel
     const sample = this.sampleMenu();
     this.saveMenuLocal(sample);
+    localStorage.setItem(this.KEYS.menuVersion, String(this.MENU_VERSION));
     return sample;
   },
   saveMenu(arr) {
