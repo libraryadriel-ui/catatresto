@@ -400,7 +400,7 @@ const MenuUI = {
         <div class="form-grid2">
           <div class="form-row"><label>Kategori</label>
             <select class="form-control" id="mfCat">
-              ${['Makanan','Minuman','Snack','Lainnya'].map((c) => `<option ${m.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+              ${['Makanan','Minuman'].map((c) => `<option ${m.category === c ? 'selected' : ''}>${c}</option>`).join('')}
             </select>
           </div>
           <div class="form-row"><label>Harga (Rp)</label><input class="form-control" id="mfPrice" type="number" value="${m.price || ''}" placeholder="25000" /></div>

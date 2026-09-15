@@ -14,7 +14,7 @@ const Store = {
   // Versi menu sampel saat ini. Naikkan nilai ini saat menu default diganti.
   // Saat app load, jika versi tersimpan < ini → menu lama otomatis di-replace
   // dengan sampel terbaru (berlaku lokal + sinkron ke cloud).
-  MENU_VERSION: 2,
+  MENU_VERSION: 3,
 
   /* ---------- DEFAULT SETTINGS ---------- */
   defaultSettings() {
@@ -94,7 +94,10 @@ const Store = {
       const arr = JSON.parse(raw);
       // Deteksi menu lama: versi lebih rendah ATAU mengandung tanda sampel lama
       const looksStale = arr.some(
-        (it) => it.id === 'f1' || it.name === 'Nasi Goreng Spesial'
+        (it) =>
+          it.id === 'f1' ||
+          it.name === 'Nasi Goreng Spesial' ||
+          ['Menu Legendaris', 'Menu Nusantara', 'Menu Lainnya'].includes(it.category)
       );
       if (storedVersion >= this.MENU_VERSION && !looksStale) {
         return arr; // up-to-date → pertahankan (termasuk edit user)
@@ -196,29 +199,29 @@ const Store = {
   sampleMenu() {
     return [
       // ===== MENU LEGENDARIS =====
-      { id: 'ml1', name: 'Soto Daging/Campur', price: 30000, category: 'Menu Legendaris', emoji: '🍲', desc: 'Soto kuning khas Bogor dengan daging sapi & jeroan.' },
-      { id: 'ml2', name: 'Soto Daging/Campur Jumbo', price: 45000, category: 'Menu Legendaris', emoji: '🍲', desc: 'Soto kuning jumbo, porsi lebih banyak.' },
-      { id: 'ml3', name: 'Soto Ayam', price: 27000, category: 'Menu Legendaris', emoji: '🍲', desc: 'Soto kuning dengan suwiran ayam.' },
-      { id: 'ml4', name: 'Soto Ayam Spesial', price: 35000, category: 'Menu Legendaris', emoji: '🍲', desc: 'Soto ayam dengan tambahan jeroan.' },
-      { id: 'ml5', name: 'Ayam Kuning Legend', price: 25000, category: 'Menu Legendaris', emoji: '🍗', desc: 'Ayam pejantan + sambal legend. @25K.' },
+      { id: 'ml1', name: 'Soto Daging/Campur', price: 30000, category: 'Makanan', emoji: '🍲', desc: 'Soto kuning khas Bogor dengan daging sapi & jeroan.' },
+      { id: 'ml2', name: 'Soto Daging/Campur Jumbo', price: 45000, category: 'Makanan', emoji: '🍲', desc: 'Soto kuning jumbo, porsi lebih banyak.' },
+      { id: 'ml3', name: 'Soto Ayam', price: 27000, category: 'Makanan', emoji: '🍲', desc: 'Soto kuning dengan suwiran ayam.' },
+      { id: 'ml4', name: 'Soto Ayam Spesial', price: 35000, category: 'Makanan', emoji: '🍲', desc: 'Soto ayam dengan tambahan jeroan.' },
+      { id: 'ml5', name: 'Ayam Kuning Legend', price: 25000, category: 'Makanan', emoji: '🍗', desc: 'Ayam pejantan + sambal legend. @25K.' },
 
       // ===== MENU NUSANTARA =====
-      { id: 'mn1', name: 'Pempek Telor Kecil', price: 8000, category: 'Menu Nusantara', emoji: '🥟', desc: 'Pempek asli Palembang isi telor.' },
-      { id: 'mn2', name: 'Pempek Lenjer Kecil', price: 8000, category: 'Menu Nusantara', emoji: '🥟', desc: 'Pempek lenjer khas Palembang.' },
-      { id: 'mn3', name: 'Pempek Adaan Bulat', price: 8000, category: 'Menu Nusantara', emoji: '🥟', desc: 'Pempek adaan bulat.' },
-      { id: 'mn4', name: 'Nasi Timbel Komplit', price: 35000, category: 'Menu Nusantara', emoji: '🍛', desc: 'Ayam goreng kuning legend, nasi putih, tempe-tahu goreng, sambal lalap.' },
-      { id: 'mn5', name: 'Nasi Liwet Komplit', price: 20000, category: 'Menu Nusantara', emoji: '🍚', desc: 'Nasi liwet, teri goreng, telor balado, timun, sambal, kerupuk kancing.' },
-      { id: 'mn6', name: 'Nasi Liwet Spesial', price: 45000, category: 'Menu Nusantara', emoji: '🍚', desc: 'Nasi liwet komplit + ayam goreng legend + kuah soto kuning.' },
+      { id: 'mn1', name: 'Pempek Telor Kecil', price: 8000, category: 'Makanan', emoji: '🥟', desc: 'Pempek asli Palembang isi telor.' },
+      { id: 'mn2', name: 'Pempek Lenjer Kecil', price: 8000, category: 'Makanan', emoji: '🥟', desc: 'Pempek lenjer khas Palembang.' },
+      { id: 'mn3', name: 'Pempek Adaan Bulat', price: 8000, category: 'Makanan', emoji: '🥟', desc: 'Pempek adaan bulat.' },
+      { id: 'mn4', name: 'Nasi Timbel Komplit', price: 35000, category: 'Makanan', emoji: '🍛', desc: 'Ayam goreng kuning legend, nasi putih, tempe-tahu goreng, sambal lalap.' },
+      { id: 'mn5', name: 'Nasi Liwet Komplit', price: 20000, category: 'Makanan', emoji: '🍚', desc: 'Nasi liwet, teri goreng, telor balado, timun, sambal, kerupuk kancing.' },
+      { id: 'mn6', name: 'Nasi Liwet Spesial', price: 45000, category: 'Makanan', emoji: '🍚', desc: 'Nasi liwet komplit + ayam goreng legend + kuah soto kuning.' },
 
       // ===== MENU LAINNYA =====
-      { id: 'mln1', name: 'Nasi Putih', price: 5000, category: 'Menu Lainnya', emoji: '🍚', desc: 'Nasi putih hangat.' },
-      { id: 'mln2', name: 'Nasi Liwet', price: 9000, category: 'Menu Lainnya', emoji: '🍚', desc: 'Nasi liwet biasa.' },
-      { id: 'mln3', name: 'Nasi Liwet Mini', price: 15000, category: 'Menu Lainnya', emoji: '🍚', desc: 'Nasi liwet porsi mini.' },
-      { id: 'mln4', name: 'Tempe / Tahu Goreng', price: 3000, category: 'Menu Lainnya', emoji: '🧈', desc: 'Tempe atau tahu goreng.' },
-      { id: 'mln5', name: 'Perkedel', price: 5000, category: 'Menu Lainnya', emoji: '🥔', desc: 'Perkedel kentang.' },
-      { id: 'mln6', name: 'Telor Dadar', price: 5000, category: 'Menu Lainnya', emoji: '🍳', desc: 'Telor dadar.' },
-      { id: 'mln7', name: '+ Kuah', price: 10000, category: 'Menu Lainnya', emoji: '🍲', desc: 'Tambahan kuah soto.' },
-      { id: 'mln8', name: '+ Sambal', price: 5000, category: 'Menu Lainnya', emoji: '🌶️', desc: 'Tambahan sambal.' },
+      { id: 'mln1', name: 'Nasi Putih', price: 5000, category: 'Makanan', emoji: '🍚', desc: 'Nasi putih hangat.' },
+      { id: 'mln2', name: 'Nasi Liwet', price: 9000, category: 'Makanan', emoji: '🍚', desc: 'Nasi liwet biasa.' },
+      { id: 'mln3', name: 'Nasi Liwet Mini', price: 15000, category: 'Makanan', emoji: '🍚', desc: 'Nasi liwet porsi mini.' },
+      { id: 'mln4', name: 'Tempe / Tahu Goreng', price: 3000, category: 'Makanan', emoji: '🧈', desc: 'Tempe atau tahu goreng.' },
+      { id: 'mln5', name: 'Perkedel', price: 5000, category: 'Makanan', emoji: '🥔', desc: 'Perkedel kentang.' },
+      { id: 'mln6', name: 'Telor Dadar', price: 5000, category: 'Makanan', emoji: '🍳', desc: 'Telor dadar.' },
+      { id: 'mln7', name: '+ Kuah', price: 10000, category: 'Makanan', emoji: '🍲', desc: 'Tambahan kuah soto.' },
+      { id: 'mln8', name: '+ Sambal', price: 5000, category: 'Makanan', emoji: '🌶️', desc: 'Tambahan sambal.' },
 
       // ===== MINUMAN =====
       { id: 'mnm1', name: 'Teh Tawar P/D', price: 5000, category: 'Minuman', emoji: '🍵', desc: 'Teh tawar panas/dingin.' },
