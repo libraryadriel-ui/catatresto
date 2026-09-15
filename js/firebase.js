@@ -155,6 +155,16 @@ const Fb = {
     await batch.commit();
   },
 
+  async saveMenu(arr) {
+    if (!this.configured) return;
+    // hapus semua item lama, lalu tulis yang baru (atomic via batch)
+    const snap = await this.db.collection('menu').get();
+    const batch = this.db.batch();
+    snap.forEach((d) => batch.delete(d.ref));
+    arr.forEach((m) => batch.set(this.db.collection('menu').doc(m.id), m));
+    await batch.commit();
+  },
+
   /* ---------- WRITE HELPERS (fire-and-forget) ---------- */
   async addItem(item) {
     if (!this.configured) return;
